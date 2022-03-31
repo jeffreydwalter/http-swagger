@@ -1,4 +1,4 @@
-module github.com/swaggo/http-swagger
+module github.com/jeffreydwalter/http-swagger
 
 go 1.15
 
