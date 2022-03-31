@@ -21,6 +21,7 @@ type Config struct {
 	DeepLinking          bool
 	DocExpansion         string
 	DomID                string
+	OAuth2RedirectURL    template.JSStr
 	PersistAuthorization bool
 	Plugins              []template.JS
 	UIConfig             map[template.JS]template.JS
@@ -56,7 +57,7 @@ func DomID(domID string) func(c *Config) {
 	}
 }
 
-// If set to true, it persists authorization data and it would not be lost on browser close/refresh
+// PersistAuthorization if set to true, it persists authorization data, and it would not be lost on browser close/refresh
 // Defaults to false
 func PersistAuthorization(persistAuthorization bool) func(c *Config) {
 	return func(c *Config) {
@@ -101,15 +102,23 @@ func AfterScript(js string) func(c *Config) {
 	}
 }
 
+// OAuth2RedirectURL is the URL where OAuth2 responses are redirected to.
+func OAuth2RedirectURL(oauth2RedirectURL string) func(c *Config) {
+	return func(c *Config) {
+		c.OAuth2RedirectURL = template.JSStr(oauth2RedirectURL)
+	}
+}
+
 // Handler wraps `http.Handler` into `http.HandlerFunc`.
 func Handler(configFns ...func(*Config)) http.HandlerFunc {
 	var once sync.Once
 
 	config := &Config{
-		URL:          "doc.json",
-		DeepLinking:  true,
-		DocExpansion: "list",
-		DomID:        "#swagger-ui",
+		URL:               "doc.json",
+		DeepLinking:       true,
+		DocExpansion:      "list",
+		DomID:             "#swagger-ui",
+		OAuth2RedirectURL: "",
 	}
 	for _, configFn := range configFns {
 		configFn(config)
@@ -242,6 +251,7 @@ window.onload = function() {
     deepLinking: {{.DeepLinking}},
     docExpansion: "{{.DocExpansion}}",
     dom_id: "{{.DomID}}",
+    {{ if .OAuth2RedirectURL}}oauth2RedirectUrl: {{.OAuth2RedirectURL}},{{end -}}
     persistAuthorization: {{.PersistAuthorization}},
     validatorUrl: null,
     presets: [
